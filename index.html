@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Image to Data URI</title>
+<meta name="description" content="Convert any image to a base64 data URI in your browser. Drag, drop, copy. No upload, nothing leaves your machine.">
+
+<link rel="canonical" href="https://0xelitesystem.github.io/image-to-data-uri/">
+
+<meta property="og:title" content="Image to Data URI">
+<meta property="og:description" content="Convert any image to a base64 data URI in your browser. Drag, drop, copy. No upload, nothing leaves your machine.">
+<meta property="og:url" content="https://0xelitesystem.github.io/image-to-data-uri/">
+<meta property="og:type" content="website">
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Image to Data URI","applicationCategory":"DeveloperApplication","operatingSystem":"Any (browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"url":"https://0xelitesystem.github.io/image-to-data-uri/","author":{"@type":"Person","name":"0xelitesystem","url":"https://elitesystem.ai"}}
+</script>
+
+<style>
+  :root {
+    --bg: #f6f7f9;
+    --panel: #ffffff;
+    --ink: #14181d;
+    --muted: #5b6570;
+    --line: #dfe3e8;
+    --accent: #2f6df6;
+    --accent-ink: #ffffff;
+    --ok: #1a7f45;
+    --warn: #9a6400;
+    --err: #b3261e;
+    --code-bg: #f0f2f5;
+    --drop: #eef1f6;
+    --drop-hot: #e2ebff;
+    --radius: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0e1116;
+      --panel: #161b22;
+      --ink: #e7ebef;
+      --muted: #97a1ac;
+      --line: #2a313b;
+      --accent: #5b8cff;
+      --accent-ink: #0b0f14;
+      --ok: #4cc47c;
+      --warn: #e0b155;
+      --err: #ff6b60;
+      --code-bg: #10151c;
+      --drop: #1a2029;
+      --drop-hot: #1e2a44;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 15px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  }
+  .wrap {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 28px 18px 64px;
+  }
+  header h1 {
+    margin: 0 0 4px;
+    font-size: 26px;
+    letter-spacing: -0.01em;
+  }
+  header p {
+    margin: 0 0 22px;
+    color: var(--muted);
+    max-width: 60ch;
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-bottom: 18px;
+  }
+
+  #drop {
+    border: 2px dashed var(--line);
+    background: var(--drop);
+    border-radius: var(--radius);
+    padding: 34px 18px;
+    text-align: center;
+    cursor: pointer;
+    transition: background .12s ease, border-color .12s ease;
+  }
+  #drop:hover { border-color: var(--accent); }
+  #drop.hot {
+    border-color: var(--accent);
+    background: var(--drop-hot);
+  }
+  #drop:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 2px;
+  }
+  #drop .big { font-weight: 600; font-size: 16px; }
+  #drop .small { color: var(--muted); margin-top: 6px; font-size: 13px; }
+  #drop input { display: none; }
+
+  .status { min-height: 1.2em; margin-top: 10px; font-size: 13px; }
+  .status.err { color: var(--err); }
+  .status.warn { color: var(--warn); }
+  .status.ok { color: var(--ok); }
+
+  .result { display: none; }
+  .result.show { display: block; }
+
+  .preview-row {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .thumb {
+    flex: 0 0 auto;
+    width: 148px;
+    height: 148px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background:
+      linear-gradient(45deg, #00000010 25%, transparent 25%, transparent 75%, #00000010 75%),
+      linear-gradient(45deg, #00000010 25%, transparent 25%, transparent 75%, #00000010 75%);
+    background-size: 16px 16px;
+    background-position: 0 0, 8px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .thumb img { max-width: 100%; max-height: 100%; display: block; }
+
+  .facts { flex: 1 1 240px; min-width: 220px; }
+  .facts dl {
+    margin: 0;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px 14px;
+    align-items: baseline;
+  }
+  .facts dt { color: var(--muted); }
+  .facts dd { margin: 0; font-variant-numeric: tabular-nums; word-break: break-word; }
+
+  .controls {
+    display: flex;
+    gap: 10px 16px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin: 4px 0 12px;
+  }
+  fieldset {
+    border: 0;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  legend { padding: 0; color: var(--muted); font-size: 13px; }
+  .seg {
+    display: inline-flex;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    overflow: hidden;
+  }
+  .seg label {
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 13px;
+    user-select: none;
+    border-right: 1px solid var(--line);
+  }
+  .seg label:last-child { border-right: 0; }
+  .seg input { position: absolute; opacity: 0; pointer-events: none; }
+  .seg label:has(input:checked) {
+    background: var(--accent);
+    color: var(--accent-ink);
+  }
+  .seg label:focus-within {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+  }
+
+  .svgopt { display: none; align-items: center; gap: 7px; font-size: 13px; color: var(--muted); }
+  .svgopt.show { display: inline-flex; }
+  .svgopt input { accent-color: var(--accent); }
+
+  textarea {
+    width: 100%;
+    min-height: 150px;
+    resize: vertical;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--code-bg);
+    color: var(--ink);
+    padding: 12px;
+    font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    word-break: break-all;
+  }
+
+  .actions { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+  button {
+    font: inherit;
+    font-size: 14px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--ink);
+    padding: 9px 16px;
+    border-radius: 9px;
+    cursor: pointer;
+  }
+  button:hover { border-color: var(--accent); }
+  button.primary {
+    background: var(--accent);
+    color: var(--accent-ink);
+    border-color: var(--accent);
+  }
+  button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+  .note { color: var(--muted); font-size: 12.5px; margin-top: 10px; }
+
+  footer {
+    color: var(--muted);
+    font-size: 13px;
+    text-align: center;
+    margin-top: 26px;
+  }
+  footer a { color: var(--accent); }
+  code { background: var(--code-bg); padding: 1px 5px; border-radius: 5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Image to Data URI</h1>
+    <p>Embed an image straight into your HTML, CSS, or Markdown as a base64 data URI. Everything runs in your browser. The image never leaves your machine.</p>
+  </header>
+
+  <div class="card">
+    <div id="drop" tabindex="0" role="button" aria-label="Choose or drop an image file">
+      <div class="big">Drop an image here</div>
+      <div class="small">or click to browse, or paste from the clipboard</div>
+      <input id="file" type="file" accept="image/*">
+    </div>
+    <div id="status" class="status" role="status" aria-live="polite"></div>
+  </div>
+
+  <div id="result" class="result card">
+    <div class="preview-row">
+      <div class="thumb"><img id="preview" alt="Preview of the selected image"></div>
+      <div class="facts">
+        <dl>
+          <dt>Name</dt><dd id="f-name">-</dd>
+          <dt>Type</dt><dd id="f-type">-</dd>
+          <dt>Original</dt><dd id="f-orig">-</dd>
+          <dt>Encoded</dt><dd id="f-enc">-</dd>
+          <dt>Overhead</dt><dd id="f-over">-</dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="controls">
+      <fieldset>
+        <legend>Wrap as</legend>
+        <div class="seg" id="fmt" role="radiogroup" aria-label="Output format">
+          <label><input type="radio" name="fmt" value="raw" checked> Data URI</label>
+          <label><input type="radio" name="fmt" value="css"> CSS</label>
+          <label><input type="radio" name="fmt" value="html"> HTML</label>
+          <label><input type="radio" name="fmt" value="md"> Markdown</label>
+        </div>
+      </fieldset>
+      <label class="svgopt" id="svgopt">
+        <input type="checkbox" id="svgurl"> URL-encode SVG (often smaller than base64)
+      </label>
+    </div>
+
+    <textarea id="out" readonly spellcheck="false" aria-label="Generated output"></textarea>
+
+    <div class="actions">
+      <button id="copy" class="primary" type="button">Copy</button>
+      <button id="clear" type="button">Clear</button>
+    </div>
+    <div class="note" id="warn"></div>
+  </div>
+
+  <footer>
+    Single file, no tracking, no upload. <a href="https://github.com/0xelitesystem/image-to-data-uri">Source on GitHub</a>.
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var drop = document.getElementById("drop");
+  var fileInput = document.getElementById("file");
+  var statusEl = document.getElementById("status");
+  var result = document.getElementById("result");
+  var preview = document.getElementById("preview");
+  var out = document.getElementById("out");
+  var warnEl = document.getElementById("warn");
+  var svgOpt = document.getElementById("svgopt");
+  var svgUrlCb = document.getElementById("svgurl");
+
+  var fName = document.getElementById("f-name");
+  var fType = document.getElementById("f-type");
+  var fOrig = document.getElementById("f-orig");
+  var fEnc = document.getElementById("f-enc");
+  var fOver = document.getElementById("f-over");
+
+  var LARGE_BYTES = 1024 * 1024; // 1 MB: data URIs above this get impractical.
+
+  // Current selection.
+  var state = {
+    name: "",
+    type: "",
+    size: 0,
+    base64Uri: "",   // data:<mime>;base64,....  (from FileReader.readAsDataURL)
+    svgText: null,   // raw SVG source, only set when the file is an SVG
+    isSvg: false
+  };
+
+  function setStatus(msg, kind) {
+    statusEl.textContent = msg || "";
+    statusEl.className = "status" + (kind ? " " + kind : "");
+  }
+
+  function formatBytes(n) {
+    if (n < 1024) return n + " B";
+    if (n < 1024 * 1024) return (n / 1024).toFixed(1) + " KB";
+    return (n / (1024 * 1024)).toFixed(2) + " MB";
+  }
+
+  // Lossless URL-encoding of SVG source into a data URI value.
+  // encodeURIComponent guarantees a valid RFC 2397 data payload; we then
+  // restore a few characters that are safe unencoded in every context an
+  // image data URI is used (HTML attribute, quoted and unquoted CSS url()).
+  // Decoding the result reproduces the exact original bytes.
+  function svgToUrlUri(svgText) {
+    var enc = encodeURIComponent(svgText)
+      .replace(/%2F/g, "/")
+      .replace(/%3A/g, ":")
+      .replace(/%3D/g, "=");
+    return "data:image/svg+xml," + enc;
+  }
+
+  function currentUri() {
+    if (state.isSvg && svgUrlCb.checked && state.svgText != null) {
+      return svgToUrlUri(state.svgText);
+    }
+    return state.base64Uri;
+  }
+
+  function wrap(uri, fmt) {
+    switch (fmt) {
+      case "css":  return 'background-image: url("' + uri + '");';
+      case "html": return '<img src="' + uri + '" alt="">';
+      case "md":   return "![](" + uri + ")";
+      default:     return uri;
+    }
+  }
+
+  function selectedFormat() {
+    var checked = document.querySelector('input[name="fmt"]:checked');
+    return checked ? checked.value : "raw";
+  }
+
+  function render() {
+    var uri = currentUri();
+    var fmt = selectedFormat();
+    out.value = wrap(uri, fmt);
+
+    var encBytes = uri.length; // data URIs are ASCII, so 1 char == 1 byte.
+    fEnc.textContent = formatBytes(encBytes) + " (" + encBytes.toLocaleString() + " chars)";
+
+    if (state.size > 0) {
+      var pct = ((encBytes - state.size) / state.size) * 100;
+      var sign = pct >= 0 ? "+" : "";
+      fOver.textContent = sign + pct.toFixed(1) + "%";
+    } else {
+      fOver.textContent = "-";
+    }
+  }
+
+  function showResult() {
+    fName.textContent = state.name || "(unnamed)";
+    fType.textContent = state.type || "unknown";
+    fOrig.textContent = formatBytes(state.size);
+
+    preview.src = state.base64Uri;
+    svgOpt.classList.toggle("show", state.isSvg);
+    if (!state.isSvg) svgUrlCb.checked = false;
+
+    render();
+    result.classList.add("show");
+
+    warnEl.textContent = state.size > LARGE_BYTES
+      ? "Heads up: this image is over 1 MB. Inlined data URIs this large bloat your files and cannot be cached separately by the browser. For anything this big, a normal image file is usually the better call."
+      : "";
+  }
+
+  function looksLikeImage(file) {
+    if (file.type && file.type.indexOf("image/") === 0) return true;
+    // Some environments report an empty type. Fall back to the extension.
+    return /\.(png|jpe?g|gif|webp|svg|bmp|ico|avif|apng|tiff?)$/i.test(file.name || "");
+  }
+
+  function isSvgFile(file) {
+    return file.type === "image/svg+xml" || /\.svg$/i.test(file.name || "");
+  }
+
+  function handleFile(file) {
+    if (!file) return;
+    if (!looksLikeImage(file)) {
+      reset();
+      setStatus('"' + (file.name || "that file") + '" is not an image. Pick a PNG, JPEG, GIF, WebP, SVG, or similar.', "err");
+      return;
+    }
+
+    setStatus("Encoding " + (file.name || "image") + "...", "");
+
+    var reader = new FileReader();
+    reader.onerror = function () {
+      setStatus("Could not read that file. It may be unreadable or blocked.", "err");
+    };
+    reader.onload = function () {
+      var dataUri = String(reader.result || "");
+      if (dataUri.indexOf("data:") !== 0) {
+        setStatus("That file could not be encoded as a data URI.", "err");
+        return;
+      }
+      state.name = file.name || "";
+      state.type = file.type || "";
+      state.size = file.size || 0;
+      state.base64Uri = dataUri;
+      state.isSvg = isSvgFile(file);
+      state.svgText = null;
+
+      if (state.isSvg) {
+        var t = new FileReader();
+        t.onload = function () {
+          state.svgText = String(t.result || "");
+          showResult();
+          setStatus("Encoded " + (file.name || "image") + ".", "ok");
+        };
+        t.onerror = function () {
+          // Base64 still works even if the text read fails.
+          showResult();
+          setStatus("Encoded " + (file.name || "image") + ".", "ok");
+        };
+        t.readAsText(file);
+      } else {
+        showResult();
+        setStatus("Encoded " + (file.name || "image") + ".", "ok");
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function reset() {
+    result.classList.remove("show");
+    out.value = "";
+    preview.removeAttribute("src");
+    warnEl.textContent = "";
+    svgOpt.classList.remove("show");
+    svgUrlCb.checked = false;
+    state = { name: "", type: "", size: 0, base64Uri: "", svgText: null, isSvg: false };
+  }
+
+  // File input and drop zone.
+  drop.addEventListener("click", function () { fileInput.click(); });
+  drop.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      fileInput.click();
+    }
+  });
+  fileInput.addEventListener("change", function () {
+    if (fileInput.files && fileInput.files[0]) handleFile(fileInput.files[0]);
+    fileInput.value = ""; // allow re-selecting the same file
+  });
+
+  ["dragenter", "dragover"].forEach(function (ev) {
+    drop.addEventListener(ev, function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      drop.classList.add("hot");
+    });
+  });
+  ["dragleave", "dragend", "drop"].forEach(function (ev) {
+    drop.addEventListener(ev, function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      drop.classList.remove("hot");
+    });
+  });
+  drop.addEventListener("drop", function (e) {
+    var dt = e.dataTransfer;
+    if (dt && dt.files && dt.files[0]) handleFile(dt.files[0]);
+  });
+
+  // Paste an image from the clipboard.
+  document.addEventListener("paste", function (e) {
+    var items = e.clipboardData && e.clipboardData.items;
+    if (!items) return;
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].kind === "file" && items[i].type.indexOf("image/") === 0) {
+        var f = items[i].getAsFile();
+        if (f) { handleFile(f); e.preventDefault(); return; }
+      }
+    }
+  });
+
+  // Controls.
+  document.getElementById("fmt").addEventListener("change", render);
+  svgUrlCb.addEventListener("change", render);
+  document.getElementById("clear").addEventListener("click", function () {
+    reset();
+    setStatus("Cleared.", "");
+  });
+
+  document.getElementById("copy").addEventListener("click", function () {
+    if (!out.value) return;
+    var done = function (ok) { setStatus(ok ? "Copied to clipboard." : "Copy failed. Select the text and copy manually.", ok ? "ok" : "err"); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(out.value).then(function () { done(true); }, function () { fallbackCopy(done); });
+    } else {
+      fallbackCopy(done);
+    }
+  });
+
+  function fallbackCopy(done) {
+    try {
+      out.focus();
+      out.select();
+      var ok = document.execCommand("copy");
+      done(!!ok);
+    } catch (err) {
+      done(false);
+    }
+  }
+})();
+</script>
+</body>
+</html>
