@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -237,6 +237,37 @@
   }
   footer a { color: var(--accent); }
   code { background: var(--code-bg); padding: 1px 5px; border-radius: 5px; }
+</style>
+<style>
+/* elitesystem brand tokens: chrome only, meaning preserved */
+:root, :root[data-theme="dark"] {
+  --accent: #d4ff3a;
+  --accent-ink: #0a0a0a;
+  --bg: #0a0a0a;
+  --code-bg: #111110;
+  --err: #ff6450;
+  --ink: #e8e8e3;
+  --line: #1f1f1d;
+  --muted: #6e6e68;
+  --ok: #7ddc7d;
+  --panel: #111110;
+  --warn: #ffb454;
+}
+:root[data-theme="light"] {
+  --accent: #2d6b00;
+  --accent-ink: #ffffff;
+  --bg: #e8ebef;
+  --code-bg: #dee2e8;
+  --err: #b8341a;
+  --ink: #0a0a0a;
+  --line: #c8cdd5;
+  --muted: #6e6e68;
+  --ok: #1a5c2e;
+  --panel: #dee2e8;
+  --warn: #a05a00;
+}
+:root { color-scheme: dark; }
+:root[data-theme="light"] { color-scheme: light; }
 </style>
 </head>
 <body>
