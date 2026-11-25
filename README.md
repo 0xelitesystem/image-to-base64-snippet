@@ -1,8 +1,8 @@
-# Image to Data URI
+# Image to Base64 Snippet
 
 Convert any image into a base64 data URI you can paste straight into HTML, CSS, or Markdown.
 
-**Live demo:** https://0xelitesystem.github.io/image-to-data-uri/
+**Live demo:** https://0xelitesystem.github.io/image-to-base64-snippet/
 
 ## Use
 
@@ -25,8 +25,8 @@ Everything runs in your browser. The image is read locally with the FileReader A
 ## Run locally
 
 ```
-git clone https://github.com/0xelitesystem/image-to-data-uri.git
-cd image-to-data-uri
+git clone https://github.com/0xelitesystem/image-to-base64-snippet.git
+cd image-to-base64-snippet
 ```
 
 Then open `index.html` in any browser. There is nothing to install. If you prefer a local server:
