@@ -51,5 +51,5 @@ MIT. See [LICENSE](LICENSE).
 
 ## Related
 
-- [jwt-inspector](https://github.com/0xelitesystem/jwt-inspector), decode and inspect JSON Web Tokens in the browser.
+- [jwt-verify-in-browser](https://github.com/0xelitesystem/jwt-verify-in-browser), decode and inspect JSON Web Tokens in the browser.
 - [eeat-signals-reference](https://github.com/0xelitesystem/eeat-signals-reference), a plain-language explainer on E-E-A-T signals.
